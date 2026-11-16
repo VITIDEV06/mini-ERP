@@ -1,0 +1,17 @@
+<tr class="venta-item{% if f.DELETE.value %} d-none{% endif %}">
+  <td>
+    {{ f.producto }}
+    {% if f.producto.errors %}<div class="invalid-feedback d-block">{{ f.producto.errors|join:' ' }}</div>{% endif %}
+  </td>
+  <td>
+    {{ f.cantidad }}
+    {% if f.cantidad.errors %}<div class="invalid-feedback d-block">{{ f.cantidad.errors|join:' ' }}</div>{% endif %}
+  </td>
+  <td class="text-end item-stock text-muted">—</td>
+  <td class="text-end item-precio">—</td>
+  <td class="text-end item-subtotal fw-semibold">—</td>
+  <td class="text-end">
+    <span class="d-none">{{ f.DELETE }}</span>
+    <button type="button" class="btn btn-sm btn-outline-danger btn-quitar" title="Quitar"><i class="bi bi-trash"></i></button>
+  </td>
+</tr>

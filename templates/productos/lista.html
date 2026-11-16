@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load erp %}
+{% block title %}Productos{% endblock %}
+{% block page_title %}Productos{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    {% if total_stock_bajo %}
+    <a href="?stock=bajo" class="alert alert-warning py-2 px-3 mb-0 d-inline-flex align-items-center gap-2 text-decoration-none">
+      <i class="bi bi-exclamation-triangle"></i> {{ total_stock_bajo }} producto{{ total_stock_bajo|pluralize }} con stock bajo
+    </a>
+    {% endif %}
+  </div>
+  {% if perms.productos.add_producto %}
+  <a href="{% url 'productos:crear' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Nuevo producto</a>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="card-body border-bottom">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label small">Buscar</label>
+        <input type="search" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="Código o nombre">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small">Categoría</label>
+        <select name="categoria" class="form-select">
+          <option value="">Todas</option>
+          {% for c in categorias %}<option value="{{ c.pk }}" {% if request.GET.categoria == c.pk|stringformat:'d' %}selected{% endif %}>{{ c.nombre }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small">Stock</label>
+        <select name="stock" class="form-select">
+          <option value="">Todos</option>
+          <option value="bajo" {% if request.GET.stock == 'bajo' %}selected{% endif %}>Stock bajo</option>
+          <option value="agotado" {% if request.GET.stock == 'agotado' %}selected{% endif %}>Agotados</option>
+        </select>
+      </div>
+      {% if perms.productos.change_producto %}
+      <div class="col-6 col-md-2">
+        <label class="form-label small">Estado</label>
+        <select name="estado" class="form-select">
+          <option value="">Todos</option>
+          <option value="activo" {% if request.GET.estado == 'activo' %}selected{% endif %}>Activos</option>
+          <option value="inactivo" {% if request.GET.estado == 'inactivo' %}selected{% endif %}>Inactivos</option>
+        </select>
+      </div>
+      {% endif %}
+      <div class="col-6 col-md-2 d-flex gap-2">
+        <button class="btn btn-outline-primary flex-grow-1" type="submit"><i class="bi bi-funnel"></i> Filtrar</button>
+        <a href="{% url 'productos:lista' %}" class="btn btn-outline-secondary" title="Limpiar"><i class="bi bi-x-lg"></i></a>
+      </div>
+    </form>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          {% include 'includes/th_orden.html' with campo='codigo' titulo='Código' %}
+          {% include 'includes/th_orden.html' with campo='nombre' titulo='Nombre' %}
+          {% include 'includes/th_orden.html' with campo='categoria' titulo='Categoría' %}
+          {% include 'includes/th_orden.html' with campo='precio' titulo='Precio' clase='text-end' %}
+          {% include 'includes/th_orden.html' with campo='stock' titulo='Stock' clase='text-end' %}
+          <th>Estado</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for p in productos %}
+        <tr>
+          <td><code>{{ p.codigo }}</code></td>
+          <td><a href="{% url 'productos:detalle' p.pk %}" class="fw-semibold text-decoration-none">{{ p.nombre }}</a></td>
+          <td>{{ p.categoria|default:'—' }}</td>
+          <td class="text-end">{{ p.precio_venta|moneda }}</td>
+          <td class="text-end">
+            {% if p.stock_bajo %}<span class="badge {% if p.stock == 0 %}text-bg-danger{% else %}text-bg-warning{% endif %}" title="Mínimo: {{ p.stock_minimo }}">{{ p.stock }}</span>{% else %}{{ p.stock }}{% endif %}
+          </td>
+          <td>{% include 'includes/estado_badge.html' with activo=p.activo %}</td>
+          <td class="text-end text-nowrap">
+            <a href="{% url 'productos:detalle' p.pk %}" class="btn btn-sm btn-outline-secondary" title="Ver"><i class="bi bi-eye"></i></a>
+            {% if perms.productos.change_producto %}
+            <a href="{% url 'productos:editar' p.pk %}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-5">No se encontraron productos.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-body pt-0">{% include 'includes/pagination.html' %}</div>
+</div>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load erp %}
+{% block title %}Venta {{ venta.numero }}{% endblock %}
+{% block page_title %}Venta {{ venta.numero }}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <a href="{% url 'ventas:lista' %}" class="btn btn-link px-0"><i class="bi bi-arrow-left"></i> Volver al listado</a>
+  <div class="d-flex gap-2">
+    <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i> Imprimir</button>
+    {% if perms.ventas.anular_venta and not venta.esta_anulada %}
+    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#anularModal"><i class="bi bi-x-octagon me-1"></i> Anular venta</button>
+    {% endif %}
+  </div>
+</div>
+
+{% if venta.esta_anulada %}
+<div class="alert alert-danger">
+  <i class="bi bi-x-octagon me-2"></i><strong>Venta anulada</strong> el {{ venta.fecha_anulacion|date:'d/m/Y H:i' }} por {{ venta.anulada_por }}.
+  <div class="small mt-1">Motivo: {{ venta.motivo_anulacion }}</div>
+</div>
+{% endif %}
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="card h-100"><div class="card-body">
+      <h2 class="h6 text-muted text-uppercase small">Cliente</h2>
+      <div class="fw-semibold">{{ venta.cliente.nombre_completo }}</div>
+      <div class="small">Identificación: {{ venta.cliente.identificacion }}</div>
+      {% if venta.cliente.telefono %}<div class="small">Tel.: {{ venta.cliente.telefono }}</div>{% endif %}
+      {% if venta.cliente.direccion %}<div class="small">{{ venta.cliente.direccion }}</div>{% endif %}
+    </div></div>
+  </div>
+  <div class="col-md-6">
+    <div class="card h-100"><div class="card-body">
+      <h2 class="h6 text-muted text-uppercase small">Venta</h2>
+      <div><span class="text-muted">Fecha:</span> {{ venta.fecha|date:'d/m/Y H:i' }}</div>
+      <div><span class="text-muted">Vendedor:</span> {{ venta.vendedor }}</div>
+      <div><span class="text-muted">Estado:</span> {% include 'ventas/_estado.html' %}</div>
+      {% if venta.observaciones %}<div><span class="text-muted">Observaciones:</span> {{ venta.observaciones }}</div>{% endif %}
+    </div></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">Detalle</div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>Código</th><th>Producto</th><th class="text-end">Cantidad</th><th class="text-end">Precio unit.</th><th class="text-end">Subtotal</th></tr></thead>
+      <tbody>
+      {% for d in detalles %}
+        <tr>
+          <td><code>{{ d.producto.codigo }}</code></td>
+          <td>{{ d.producto.nombre }}</td>
+          <td class="text-end">{{ d.cantidad }}</td>
+          <td class="text-end">{{ d.precio_unitario|moneda }}</td>
+          <td class="text-end">{{ d.subtotal|moneda }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr><td colspan="4" class="text-end text-muted">Subtotal</td><td class="text-end">{{ venta.subtotal|moneda }}</td></tr>
+        <tr><td colspan="4" class="text-end fw-bold">Total</td><td class="text-end fw-bold fs-5">{{ venta.total|moneda }}</td></tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+{% if perms.ventas.anular_venta and not venta.esta_anulada %}
+<div class="modal fade" id="anularModal" tabindex="-1" aria-labelledby="anularModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" action="{% url 'ventas:anular' venta.pk %}">
+      {% csrf_token %}
+      <div class="modal-header">
+        <h5 class="modal-title" id="anularModalLabel">Anular venta {{ venta.numero }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <p>Esta acción no se puede deshacer. Las cantidades vendidas se devolverán al inventario.</p>
+        {% include 'includes/form_fields.html' with form=anular_form %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-danger">Anular venta</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

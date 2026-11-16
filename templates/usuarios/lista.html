@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Usuarios{% endblock %}
+{% block page_title %}Usuarios{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-end mb-3">
+  {% if perms.usuarios.add_usuario %}
+  <a href="{% url 'usuarios:crear' %}" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i> Nuevo usuario</a>
+  {% endif %}
+</div>
+<div class="card">
+  <div class="card-body border-bottom">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-5">
+        <label class="form-label small">Buscar</label>
+        <input type="search" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="Usuario, nombre o correo">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small">Rol</label>
+        <select name="rol" class="form-select">
+          <option value="">Todos</option>
+          {% for valor, etiqueta in roles %}<option value="{{ valor }}" {% if request.GET.rol == valor %}selected{% endif %}>{{ etiqueta }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small">Estado</label>
+        <select name="estado" class="form-select">
+          <option value="">Todos</option>
+          <option value="activo" {% if request.GET.estado == 'activo' %}selected{% endif %}>Activos</option>
+          <option value="inactivo" {% if request.GET.estado == 'inactivo' %}selected{% endif %}>Inactivos</option>
+        </select>
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button class="btn btn-outline-primary flex-grow-1" type="submit"><i class="bi bi-funnel"></i> Filtrar</button>
+        <a href="{% url 'usuarios:lista' %}" class="btn btn-outline-secondary" title="Limpiar"><i class="bi bi-x-lg"></i></a>
+      </div>
+    </form>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          {% include 'includes/th_orden.html' with campo='username' titulo='Usuario' %}
+          {% include 'includes/th_orden.html' with campo='nombre' titulo='Nombre' %}
+          <th>Correo</th>
+          {% include 'includes/th_orden.html' with campo='rol' titulo='Rol' %}
+          {% include 'includes/th_orden.html' with campo='ingreso' titulo='Último ingreso' %}
+          <th>Estado</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for u in usuarios %}
+        <tr>
+          <td class="fw-semibold">{{ u.username }}{% if u.is_superuser %} <span class="badge text-bg-dark">superusuario</span>{% endif %}</td>
+          <td>{{ u.get_full_name|default:'—' }}</td>
+          <td>{{ u.email|default:'—' }}</td>
+          <td><span class="badge {% if u.es_administrador %}text-bg-primary{% else %}text-bg-info{% endif %}">{{ u.get_rol_display }}</span></td>
+          <td>{{ u.last_login|date:'d/m/Y H:i'|default:'Nunca' }}</td>
+          <td>{% include 'includes/estado_badge.html' with activo=u.is_active %}</td>
+          <td class="text-end text-nowrap">
+            {% if perms.usuarios.change_usuario %}
+            <a href="{% url 'usuarios:editar' u.pk %}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'usuarios:password' u.pk %}" class="btn btn-sm btn-outline-secondary" title="Cambiar contraseña"><i class="bi bi-key"></i></a>
+            {% if u.pk != user.pk %}
+            <form method="post" action="{% url 'usuarios:estado' u.pk %}" class="d-inline"
+                  data-confirm="¿Desea {{ u.is_active|yesno:'desactivar,activar' }} al usuario «{{ u.username }}»?"
+                  data-confirm-class="{{ u.is_active|yesno:'btn-danger,btn-success' }}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm {{ u.is_active|yesno:'btn-outline-danger,btn-outline-success' }}" title="{{ u.is_active|yesno:'Desactivar,Activar' }}">
+                <i class="bi {{ u.is_active|yesno:'bi-person-slash,bi-person-check' }}"></i>
+              </button>
+            </form>
+            {% endif %}
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-5">No se encontraron usuarios.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-body pt-0">{% include 'includes/pagination.html' %}</div>
+</div>
+{% endblock %}

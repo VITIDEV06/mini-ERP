@@ -1,0 +1,52 @@
+{% with seccion=request.resolver_match.app_name url=request.resolver_match.url_name %}
+<aside id="sidebar" class="sidebar offcanvas-lg offcanvas-start text-white" tabindex="-1" aria-labelledby="sidebarLabel">
+  <div class="offcanvas-header d-lg-none">
+    <h5 class="offcanvas-title" id="sidebarLabel">Mini ERP</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Cerrar"></button>
+  </div>
+  <div class="sidebar-brand d-none d-lg-flex align-items-center gap-2 px-4">
+    <i class="bi bi-boxes fs-4"></i><span class="fw-semibold fs-5">Mini ERP</span>
+  </div>
+  <nav class="sidebar-nav px-2 py-3">
+    <a class="nav-link {% if seccion == 'dashboard' %}active{% endif %}" href="{% url 'dashboard:inicio' %}">
+      <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
+
+    {% if perms.ventas.view_venta %}
+    <div class="sidebar-heading">Comercial</div>
+    {% if perms.ventas.add_venta %}
+    <a class="nav-link {% if seccion == 'ventas' and url == 'crear' %}active{% endif %}" href="{% url 'ventas:crear' %}">
+      <i class="bi bi-cart-plus"></i> Nueva venta
+    </a>
+    {% endif %}
+    <a class="nav-link {% if seccion == 'ventas' and url != 'crear' %}active{% endif %}" href="{% url 'ventas:lista' %}">
+      <i class="bi bi-receipt"></i> {% if perms.ventas.ver_todas_ventas %}Ventas{% else %}Mis ventas{% endif %}
+    </a>
+    {% endif %}
+    {% if perms.clientes.view_cliente %}
+    <a class="nav-link {% if seccion == 'clientes' %}active{% endif %}" href="{% url 'clientes:lista' %}">
+      <i class="bi bi-people"></i> Clientes
+    </a>
+    {% endif %}
+
+    {% if perms.productos.view_producto %}
+    <div class="sidebar-heading">Inventario</div>
+    <a class="nav-link {% if seccion == 'productos' and 'categoria' not in url %}active{% endif %}" href="{% url 'productos:lista' %}">
+      <i class="bi bi-box-seam"></i> Productos
+    </a>
+    {% if perms.productos.view_categoria %}
+    <a class="nav-link {% if seccion == 'productos' and 'categoria' in url %}active{% endif %}" href="{% url 'productos:categorias' %}">
+      <i class="bi bi-tags"></i> Categorías
+    </a>
+    {% endif %}
+    {% endif %}
+
+    {% if perms.usuarios.view_usuario %}
+    <div class="sidebar-heading">Administración</div>
+    <a class="nav-link {% if seccion == 'usuarios' %}active{% endif %}" href="{% url 'usuarios:lista' %}">
+      <i class="bi bi-person-gear"></i> Usuarios
+    </a>
+    {% endif %}
+  </nav>
+</aside>
+{% endwith %}

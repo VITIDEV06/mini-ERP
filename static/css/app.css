@@ -1,0 +1,66 @@
+:root {
+  --erp-sidebar-bg: #1e293b;
+  --erp-sidebar-hover: #334155;
+  --erp-sidebar-active: #2563eb;
+  --erp-body-bg: #f1f5f9;
+  --erp-sidebar-width: 250px;
+}
+
+body { background: var(--erp-body-bg); }
+
+/* Sidebar */
+.sidebar { background: var(--erp-sidebar-bg); }
+@media (min-width: 992px) {
+  .sidebar {
+    width: var(--erp-sidebar-width);
+    min-height: 100vh;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+}
+.sidebar.offcanvas-lg { --bs-offcanvas-bg: var(--erp-sidebar-bg); --bs-offcanvas-color: #fff; }
+.sidebar-brand { height: 64px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.sidebar-heading {
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+  color: #94a3b8; padding: 1rem .9rem .35rem;
+}
+.sidebar-nav .nav-link {
+  color: #cbd5e1; border-radius: .5rem; padding: .55rem .9rem; display: flex; gap: .65rem; align-items: center;
+  margin-bottom: 2px;
+}
+.sidebar-nav .nav-link:hover { background: var(--erp-sidebar-hover); color: #fff; }
+.sidebar-nav .nav-link.active { background: var(--erp-sidebar-active); color: #fff; }
+
+/* Topbar */
+.topbar { height: 64px; z-index: 1020; }
+.avatar {
+  width: 34px; height: 34px; border-radius: 50%; background: var(--erp-sidebar-active); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center; font-weight: 600;
+}
+
+/* Tarjetas */
+.card { border: 0; box-shadow: 0 1px 3px rgba(15,23,42,.08); border-radius: .75rem; }
+.card-header { background: #fff; border-bottom: 1px solid #e2e8f0; font-weight: 600; border-radius: .75rem .75rem 0 0 !important; }
+.stat-card .stat-icon {
+  width: 48px; height: 48px; border-radius: .75rem; display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+}
+.stat-card .stat-value { font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
+
+/* Tablas */
+.table > :not(caption) > * > * { padding: .65rem .75rem; }
+.table thead th { font-size: .78rem; text-transform: uppercase; letter-spacing: .03em; color: #64748b; white-space: nowrap; }
+.table-hover tbody tr:hover { background: #f8fafc; }
+
+/* Formulario de venta */
+.venta-item td { vertical-align: middle; }
+.venta-total { font-size: 1.6rem; font-weight: 700; }
+
+/* Login */
+.login-page { min-height: 100vh; background: linear-gradient(135deg, #1e293b 0%, #2563eb 100%); }
+.login-card { max-width: 420px; width: 100%; }
+
+.chart-box { position: relative; height: 280px; }

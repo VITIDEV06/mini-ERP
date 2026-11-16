@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load erp %}
+{% block title %}{{ cliente.nombre_completo }}{% endblock %}
+{% block page_title %}Cliente{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <a href="{% url 'clientes:lista' %}" class="btn btn-link px-0"><i class="bi bi-arrow-left"></i> Volver al listado</a>
+  {% if perms.clientes.change_cliente %}
+  <div class="d-flex gap-2">
+    <a href="{% url 'clientes:editar' cliente.pk %}" class="btn btn-primary"><i class="bi bi-pencil me-1"></i> Editar</a>
+    <form method="post" action="{% url 'clientes:estado' cliente.pk %}"
+          data-confirm="¿Desea {{ cliente.activo|yesno:'desactivar,activar' }} al cliente «{{ cliente.nombre_completo }}»?"
+          data-confirm-class="{{ cliente.activo|yesno:'btn-danger,btn-success' }}">
+      {% csrf_token %}
+      <button type="submit" class="btn {{ cliente.activo|yesno:'btn-outline-danger,btn-outline-success' }}">
+        <i class="bi {{ cliente.activo|yesno:'bi-slash-circle,bi-check-circle' }} me-1"></i>{{ cliente.activo|yesno:'Desactivar,Activar' }}
+      </button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>{{ cliente.nombre_completo }}</span>{% include 'includes/estado_badge.html' with activo=cliente.activo %}
+      </div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Identificación</dt><dd class="col-sm-7">{{ cliente.identificacion }}</dd>
+          <dt class="col-sm-5">Teléfono</dt><dd class="col-sm-7">{{ cliente.telefono|default:'—' }}</dd>
+          <dt class="col-sm-5">Correo</dt><dd class="col-sm-7">{{ cliente.email|default:'—' }}</dd>
+          <dt class="col-sm-5">Dirección</dt><dd class="col-sm-7">{{ cliente.direccion|default:'—' }}</dd>
+          <dt class="col-sm-5">Registro</dt><dd class="col-sm-7">{{ cliente.fecha_registro|date:'d/m/Y H:i' }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-header">{% if perms.ventas.ver_todas_ventas %}Últimas ventas{% else %}Mis últimas ventas a este cliente{% endif %}</div>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+          <thead><tr><th>Venta</th><th>Fecha</th><th class="text-end">Total</th><th>Estado</th></tr></thead>
+          <tbody>
+          {% for v in ventas %}
+            <tr>
+              <td><a href="{% url 'ventas:detalle' v.pk %}">{{ v.numero }}</a></td>
+              <td>{{ v.fecha|date:'d/m/Y H:i' }}</td>
+              <td class="text-end">{{ v.total|moneda }}</td>
+              <td>{% include 'ventas/_estado.html' with venta=v %}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="text-center text-muted py-4">Sin ventas registradas.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

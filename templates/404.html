@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}No encontrado{% endblock %}
+{% block page_title %}Página no encontrada{% endblock %}
+{% block content %}
+<div class="card"><div class="card-body text-center py-5">
+  <i class="bi bi-search display-4 text-muted"></i>
+  <h2 class="h4 mt-3">El recurso solicitado no existe</h2>
+  <p class="text-muted">Es posible que haya sido movido o que no tenga acceso a él.</p>
+  <a href="{% url 'dashboard:inicio' %}" class="btn btn-primary">Volver al dashboard</a>
+</div></div>
+{% endblock %}

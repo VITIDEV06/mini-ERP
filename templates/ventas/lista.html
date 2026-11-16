@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load erp %}
+{% block title %}Ventas{% endblock %}
+{% block page_title %}{% if perms.ventas.ver_todas_ventas %}Ventas{% else %}Mis ventas{% endif %}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div class="text-muted">Total confirmado en el filtro: <strong class="text-body">{{ total_filtrado|moneda }}</strong></div>
+  {% if perms.ventas.add_venta %}
+  <a href="{% url 'ventas:crear' %}" class="btn btn-primary"><i class="bi bi-cart-plus me-1"></i> Nueva venta</a>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="card-body border-bottom">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label small">Buscar</label>
+        <input type="search" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="N.º de venta o cliente">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small">Desde</label>
+        <input type="date" name="desde" value="{{ request.GET.desde }}" class="form-control">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small">Hasta</label>
+        <input type="date" name="hasta" value="{{ request.GET.hasta }}" class="form-control">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small">Estado</label>
+        <select name="estado" class="form-select">
+          <option value="">Todos</option>
+          {% for valor, etiqueta in estados %}<option value="{{ valor }}" {% if request.GET.estado == valor %}selected{% endif %}>{{ etiqueta }}</option>{% endfor %}
+        </select>
+      </div>
+      {% if vendedores %}
+      <div class="col-6 col-md-1">
+        <label class="form-label small">Vendedor</label>
+        <select name="vendedor" class="form-select">
+          <option value="">Todos</option>
+          {% for u in vendedores %}<option value="{{ u.pk }}" {% if request.GET.vendedor == u.pk|stringformat:'d' %}selected{% endif %}>{{ u.username }}</option>{% endfor %}
+        </select>
+      </div>
+      {% endif %}
+      <div class="col-md-2 d-flex gap-2">
+        <button class="btn btn-outline-primary flex-grow-1" type="submit"><i class="bi bi-funnel"></i> Filtrar</button>
+        <a href="{% url 'ventas:lista' %}" class="btn btn-outline-secondary" title="Limpiar"><i class="bi bi-x-lg"></i></a>
+      </div>
+    </form>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          {% include 'includes/th_orden.html' with campo='numero' titulo='N.º' %}
+          {% include 'includes/th_orden.html' with campo='fecha' titulo='Fecha' %}
+          {% include 'includes/th_orden.html' with campo='cliente' titulo='Cliente' %}
+          {% if perms.ventas.ver_todas_ventas %}<th>Vendedor</th>{% endif %}
+          {% include 'includes/th_orden.html' with campo='total' titulo='Total' clase='text-end' %}
+          <th>Estado</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for v in ventas %}
+        <tr>
+          <td><a href="{% url 'ventas:detalle' v.pk %}" class="fw-semibold text-decoration-none">{{ v.numero }}</a></td>
+          <td>{{ v.fecha|date:'d/m/Y H:i' }}</td>
+          <td>{{ v.cliente.nombre_completo }}<div class="small text-muted">{{ v.cliente.identificacion }}</div></td>
+          {% if perms.ventas.ver_todas_ventas %}<td>{{ v.vendedor }}</td>{% endif %}
+          <td class="text-end">{{ v.total|moneda }}</td>
+          <td>{% include 'ventas/_estado.html' with venta=v %}</td>
+          <td class="text-end"><a href="{% url 'ventas:detalle' v.pk %}" class="btn btn-sm btn-outline-secondary" title="Ver detalle"><i class="bi bi-eye"></i></a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-5">No se encontraron ventas.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-body pt-0">{% include 'includes/pagination.html' %}</div>
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{# Renderiza los campos de un formulario con estilos de Bootstrap. Uso: include con form=... #}
+{% if form.non_field_errors %}
+<div class="alert alert-danger">{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>
+{% endif %}
+{% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+<div class="row g-3">
+  {% for field in form.visible_fields %}
+  <div class="{% if field.field.widget.input_type == 'checkbox' %}col-12{% elif field.field.widget.attrs.rows %}col-12{% else %}col-md-6{% endif %}">
+    {% if field.field.widget.input_type == 'checkbox' %}
+      <div class="form-check form-switch">
+        {{ field }}
+        <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+      </div>
+    {% else %}
+      <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}</label>
+      {{ field }}
+    {% endif %}
+    {% if field.errors %}<div class="invalid-feedback d-block">{{ field.errors|join:' ' }}</div>{% endif %}
+    {% if field.help_text %}<div class="form-text">{{ field.help_text|safe }}</div>{% endif %}
+  </div>
+  {% endfor %}
+</div>

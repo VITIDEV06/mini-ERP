@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load erp %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+  <div>
+    <h2 class="h4 mb-0">Hola, {{ user.first_name|default:user.username }}</h2>
+    <small class="text-muted">{% if vista_general %}Resumen general de la empresa{% else %}Resumen de tus ventas{% endif %}</small>
+  </div>
+  {% if perms.ventas.add_venta %}
+  <a href="{% url 'ventas:crear' %}" class="btn btn-primary"><i class="bi bi-cart-plus me-1"></i> Nueva venta</a>
+  {% endif %}
+</div>
+
+<div class="row g-3 mb-4">
+  {% if vista_general %}
+  <div class="col-sm-6 col-xl-3">{% include 'dashboard/_stat.html' with icono='bi-box-seam' color='primary' titulo='Productos activos' valor=stats.total_productos %}</div>
+  <div class="col-sm-6 col-xl-3">{% include 'dashboard/_stat.html' with icono='bi-people' color='info' titulo='Clientes activos' valor=stats.total_clientes %}</div>
+  {% else %}
+  <div class="col-sm-6 col-xl-3">{% include 'dashboard/_stat.html' with icono='bi-calendar-check' color='primary' titulo='Mis ventas de hoy' valor=stats.ventas_hoy %}</div>
+  <div class="col-sm-6 col-xl-3">{% include 'dashboard/_stat.html' with icono='bi-graph-up' color='info' titulo='Mis ingresos del mes' valor=stats.ingresos_mes|moneda %}</div>
+  {% endif %}
+  <div class="col-sm-6 col-xl-3">{% include 'dashboard/_stat.html' with icono='bi-receipt' color='success' titulo=vista_general|yesno:'Ventas confirmadas,Mis ventas confirmadas' valor=stats.num_ventas %}</div>
+  <div class="col-sm-6 col-xl-3">{% include 'dashboard/_stat.html' with icono='bi-cash-coin' color='warning' titulo=vista_general|yesno:'Ingresos acumulados,Mis ingresos acumulados' valor=stats.ingresos|moneda %}</div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-xl-8">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Ventas por período</span>
+        <div class="btn-group btn-group-sm" role="group" aria-label="Período">
+          <button type="button" class="btn btn-outline-primary active" data-periodo="dia">30 días</button>
+          <button type="button" class="btn btn-outline-primary" data-periodo="mes">12 meses</button>
+        </div>
+      </div>
+      <div class="card-body"><div class="chart-box"><canvas id="chartVentas" aria-label="Gráfico de ventas por período" role="img"></canvas></div></div>
+    </div>
+  </div>
+  <div class="col-xl-4">
+    {% if vista_general %}
+    <div class="card h-100">
+      <div class="card-header">Productos más vendidos</div>
+      <div class="card-body">
+        {% if stats.top_productos.labels %}
+        <div class="chart-box"><canvas id="chartTop" aria-label="Productos más vendidos" role="img"></canvas></div>
+        {% else %}<p class="text-muted text-center my-5">Aún no hay ventas registradas.</p>{% endif %}
+      </div>
+    </div>
+    {% else %}
+    <div class="card h-100">
+      <div class="card-header">Información</div>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item d-flex justify-content-between"><span>Productos disponibles</span><strong>{{ stats.total_productos }}</strong></li>
+        <li class="list-group-item d-flex justify-content-between"><span>Clientes activos</span><strong>{{ stats.total_clientes }}</strong></li>
+        <li class="list-group-item d-flex justify-content-between"><span>Ventas anuladas</span><strong>{{ stats.num_anuladas }}</strong></li>
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="{% if vista_general %}col-xl-8{% else %}col-12{% endif %}">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Ventas recientes</span>
+        <a href="{% url 'ventas:lista' %}" class="small">Ver todas</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead><tr><th>N.º</th><th>Fecha</th><th>Cliente</th>{% if vista_general %}<th>Vendedor</th>{% endif %}<th class="text-end">Total</th><th>Estado</th></tr></thead>
+          <tbody>
+          {% for v in stats.recientes %}
+            <tr>
+              <td><a href="{% url 'ventas:detalle' v.pk %}">{{ v.numero }}</a></td>
+              <td>{{ v.fecha|date:'d/m/Y H:i' }}</td>
+              <td>{{ v.cliente.nombre_completo }}</td>
+              {% if vista_general %}<td>{{ v.vendedor }}</td>{% endif %}
+              <td class="text-end">{{ v.total|moneda }}</td>
+              <td>{% include 'ventas/_estado.html' with venta=v %}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6" class="text-center text-muted py-4">No hay ventas registradas.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% if vista_general %}
+  <div class="col-xl-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-exclamation-triangle text-warning me-1"></i> Stock bajo</span>
+        <span class="badge text-bg-warning">{{ stats.num_stock_bajo }}</span>
+      </div>
+      <ul class="list-group list-group-flush">
+        {% for p in stats.stock_bajo %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <a href="{% url 'productos:detalle' p.pk %}" class="text-truncate me-2">{{ p.nombre }}</a>
+          <span class="badge {% if p.stock == 0 %}text-bg-danger{% else %}text-bg-warning{% endif %}">{{ p.stock }} / mín. {{ p.stock_minimo }}</span>
+        </li>
+        {% empty %}
+        <li class="list-group-item text-muted text-center py-4">Todo el inventario está sobre el mínimo.</li>
+        {% endfor %}
+      </ul>
+      {% if stats.num_stock_bajo > 8 %}<div class="card-footer bg-white text-center"><a href="{% url 'productos:lista' %}?stock=bajo" class="small">Ver todos</a></div>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{{ stats.por_dia|json_script:'data-dia' }}
+{{ stats.por_mes|json_script:'data-mes' }}
+{% if vista_general %}{{ stats.top_productos|json_script:'data-top' }}{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  const leer = id => { const el = document.getElementById(id); return el ? JSON.parse(el.textContent) : null; };
+  const datos = { dia: leer('data-dia'), mes: leer('data-mes') };
+  const money = v => '$ ' + Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const ctx = document.getElementById('chartVentas');
+  const chart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: datos.dia.labels, datasets: [{ label: 'Ingresos', data: datos.dia.valores, backgroundColor: '#2563eb', borderRadius: 4 }] },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => money(c.parsed.y) } } },
+      scales: { y: { beginAtZero: true, ticks: { callback: v => money(v) } }, x: { grid: { display: false } } }
+    }
+  });
+  document.querySelectorAll('[data-periodo]').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-periodo]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const d = datos[btn.dataset.periodo];
+    chart.data.labels = d.labels; chart.data.datasets[0].data = d.valores; chart.update();
+  }));
+
+  const top = leer('data-top');
+  const ctxTop = document.getElementById('chartTop');
+  if (top && ctxTop) {
+    new Chart(ctxTop, {
+      type: 'doughnut',
+      data: { labels: top.labels, datasets: [{ data: top.valores, backgroundColor: ['#2563eb', '#16a34a', '#f59e0b', '#0ea5e9', '#a855f7'] }] },
+      options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: c => c.label + ': ' + c.parsed + ' uds.' } } } }
+    });
+  }
+})();
+</script>
+{% endblock %}

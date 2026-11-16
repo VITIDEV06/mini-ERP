@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load erp %}
+{% block title %}{{ producto.nombre }}{% endblock %}
+{% block page_title %}Producto{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <a href="{% url 'productos:lista' %}" class="btn btn-link px-0"><i class="bi bi-arrow-left"></i> Volver al listado</a>
+  {% if perms.productos.change_producto %}
+  <div class="d-flex gap-2">
+    <a href="{% url 'productos:editar' producto.pk %}" class="btn btn-primary"><i class="bi bi-pencil me-1"></i> Editar</a>
+    <form method="post" action="{% url 'productos:estado' producto.pk %}"
+          data-confirm="¿Desea {{ producto.activo|yesno:'desactivar,activar' }} el producto «{{ producto.nombre }}»?"
+          data-confirm-class="{{ producto.activo|yesno:'btn-danger,btn-success' }}">
+      {% csrf_token %}
+      <button type="submit" class="btn {{ producto.activo|yesno:'btn-outline-danger,btn-outline-success' }}">
+        <i class="bi {{ producto.activo|yesno:'bi-slash-circle,bi-check-circle' }} me-1"></i>{{ producto.activo|yesno:'Desactivar,Activar' }}
+      </button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+
+{% if producto.stock_bajo and producto.activo %}
+<div class="alert alert-warning"><i class="bi bi-exclamation-triangle me-2"></i>Stock bajo: quedan {{ producto.stock }} unidades (mínimo {{ producto.stock_minimo }}).</div>
+{% endif %}
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>{{ producto.nombre }}</span>{% include 'includes/estado_badge.html' with activo=producto.activo %}
+      </div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Código</dt><dd class="col-sm-8"><code>{{ producto.codigo }}</code></dd>
+          <dt class="col-sm-4">Categoría</dt><dd class="col-sm-8">{{ producto.categoria|default:'Sin categoría' }}</dd>
+          <dt class="col-sm-4">Descripción</dt><dd class="col-sm-8">{{ producto.descripcion|default:'—'|linebreaksbr }}</dd>
+          <dt class="col-sm-4">Precio de venta</dt><dd class="col-sm-8">{{ producto.precio_venta|moneda }}</dd>
+          {% if perms.productos.ver_costos %}
+          <dt class="col-sm-4">Costo</dt><dd class="col-sm-8">{{ producto.costo|moneda }}</dd>
+          {% endif %}
+          <dt class="col-sm-4">Creado</dt><dd class="col-sm-8">{{ producto.creado|date:'d/m/Y H:i' }}</dd>
+          <dt class="col-sm-4">Actualizado</dt><dd class="col-sm-8">{{ producto.actualizado|date:'d/m/Y H:i' }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card text-center h-100">
+      <div class="card-header">Inventario</div>
+      <div class="card-body d-flex flex-column justify-content-center">
+        <div class="display-5 fw-bold {% if producto.stock_bajo %}text-warning{% endif %}">{{ producto.stock }}</div>
+        <div class="text-muted">unidades disponibles</div>
+        <div class="small mt-2">Stock mínimo: {{ producto.stock_minimo }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if perms.ventas.ver_todas_ventas %}
+<div class="card mt-3">
+  <div class="card-header">Últimas ventas del producto</div>
+  <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle mb-0">
+      <thead><tr><th>Venta</th><th>Fecha</th><th>Cliente</th><th class="text-end">Cant.</th><th class="text-end">Precio unit.</th><th>Estado</th></tr></thead>
+      <tbody>
+      {% for d in ultimas_ventas %}
+        <tr>
+          <td><a href="{% url 'ventas:detalle' d.venta.pk %}">{{ d.venta.numero }}</a></td>
+          <td>{{ d.venta.fecha|date:'d/m/Y H:i' }}</td>
+          <td>{{ d.venta.cliente.nombre_completo }}</td>
+          <td class="text-end">{{ d.cantidad }}</td>
+          <td class="text-end">{{ d.precio_unitario|moneda }}</td>
+          <td>{% include 'ventas/_estado.html' with venta=d.venta %}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-3">Sin ventas registradas.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

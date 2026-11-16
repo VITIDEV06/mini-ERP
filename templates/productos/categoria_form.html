@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Categoría{% endblock %}
+{% block page_title %}{% if object %}Editar categoría{% else %}Nueva categoría{% endif %}{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 700px">
+  <div class="card-body">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include 'includes/form_fields.html' %}
+      <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i> Guardar</button>
+        <a href="{% url 'productos:categorias' %}" class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
